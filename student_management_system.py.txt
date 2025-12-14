@@ -1,0 +1,139 @@
+import csv  # modules helps read/write files.
+import json
+
+# Add Student to CSV
+def add_student():                        # declaring a function
+    roll = input("Roll No: ")               # asking user to get roll number and saving to variable
+    name = input("Name: ")
+    join = input("Joining Date (YYYY-MM-DD): ")
+    class_name = input("Class: ")
+
+    with open("students.csv", "a", newline="") as f:   # opening csv file in append mode...file closed automatically
+        w = csv.writer(f)                              # creating csv writer object...it writes to file f
+        w.writerow([roll, name, join, class_name])
+
+    print("Student added successfully.\n")
+
+# Add Marks to CSV
+
+def add_marks():
+    roll = input("Roll No: ")
+    subject = input("Subject: ")
+    marks = input("Marks: ")
+
+    with open("marks.csv", "a", newline="") as f:    # marks is saved as text..
+        w = csv.writer(f)
+        w.writerow([roll, subject, marks])
+
+    print("Marks added.\n")
+
+
+# Attendance to TXT
+
+def log_attendance():
+    roll = input("Roll No: ")
+    date = input("Date (YYYY-MM-DD): ")
+    status = input("Status (P/A): ")
+
+    with open("attendance.txt", "a") as f:
+        f.write(f"{roll},{date},{status}\n")      # \n adds a newline so each record is one line
+
+    print("Attendance logged.\n")
+
+
+# Assign Task to JSON
+
+def assign_task():
+    roll = input("Roll No: ")
+    task = input("Task Description: ")
+    status = input("Status (completed/not_completed): ")
+
+    try:
+        with open("tasks.json", "r") as f:   # try...try to open available tasks and load its content to data
+            data = json.load(f)
+    except:
+        data = {}                           # if file is does nit exist or invalid, except sets empty dictionary
+
+    data[roll] = {"task": task, "completed": False}  # it store the new task under key = to roll no.
+
+    with open("tasks.json", "w") as f:       # open task in open mode and save whole data back using json.dump
+        json.dump(data, f, indent=2)
+
+    print("Task assigned.\n")
+
+# Pass/Fail Report
+
+def report():
+    print("\n===== FULL STUDENT REPORT =====\n")
+    print("ROLL | NAME     | MARKS       | TOTAL | AVG | RESULT")
+
+    # Read student details
+    students = {}
+    try:
+        with open("students.csv", "r") as f:
+            r = csv.reader(f)                # creates a CSV reader object and reads the file line-by-line and splits each line into a list.
+            for row in r:
+                if row:                       #checks that the row is not empty.
+                    students[row[0]] = row[1]  # roll : name.. stores roll number and name into a dictionary.
+    except:
+        print("Students file not found.")     # if file missing it prints message and stops
+        return
+
+    # Read marks
+    marks = {}
+    try:
+        with open("marks.csv", "r") as f:  # opens file in read mode
+            r = csv.reader(f)                  #Creates a CSV reader to read the file line-by-line.
+            for row in r:
+                if row:                           #Checks the row is not empty.
+                    roll, subject, m = row        #Assigns each column in the row to separate variables.
+                    m = int(m)                     #Converts marks from string to integer.
+                    if roll not in marks:
+                        marks[roll] = []           #Creates an empty list for that roll number.
+                    marks[roll].append(m)          #Adds the mark (m) to the list for that student.
+    except:
+        pass  # no marks yet                       #Ignore the error and continue
+
+    # Print report row by row
+    for roll, name in students.items():             #Loops through each student in the students dictionary.
+
+        if roll not in marks:
+            print(f"{roll:<4} | {name:<8} | {'No Marks':<12} | 0     | 0   | FAIL")  #If no marks found, print a formatted report line.
+            continue
+
+        mlist = marks[roll]                                           #Gets the list of marks for that student.
+        total = sum(mlist)                                            #Calculates total marks.
+        avg = total // len(mlist)                                      #Calculates integer average using floor division (//).
+        status = "PASS" if all(m >= 35 for m in mlist) else "FAIL"     #it is a conditional expression If every mark in mlist is >= 35 then "PASS" Otherwise "FAIL"
+
+        marks_str = ",".join(str(m) for m in mlist)                    #Converts the marks list into a comma-separated string.
+
+        print(f"{roll:<4} | {name:<8} | {marks_str:<12} | {total:<5} | {avg:<3} | {status}")
+
+# Menu
+while True:
+    print("\n---- MENU ----")
+    print("1. Add Student")
+    print("2. Add Marks")
+    print("3. Attendance")
+    print("4. Assign Task")
+    print("5. Report")
+    print("0. Exit")
+
+    ch = input("Enter choice: ")
+
+    if ch == "1":
+        add_student()
+    elif ch == "2":
+        add_marks()
+    elif ch == "3":
+        log_attendance()
+    elif ch == "4":
+        assign_task()
+    elif ch == "5":
+        report()
+    elif ch == "0":
+        print("Exiting...")
+        break
+    else:
+        print("Invalid choice.")
